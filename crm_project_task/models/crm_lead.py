@@ -17,8 +17,18 @@ class CrmLead(models.Model):
 
     def action_tasks(self):
         self.ensure_one()
-        ctx = self._context.copy()
         action = self.env.ref("project.action_view_task").sudo().read()[0]
-        ctx.update({"default_lead_id": self.id})
-        action.update({"context": ctx, "domain": [("lead_id", "=", self.id)]})
+        action.update(
+            {
+                "domain": [("lead_id", "=", self.id)],
+                "context": {
+                    **self.env.context,
+                    "default_lead_id": self.id,
+                    "default_name": self.name,
+                    "default_project_id": self.env.company.crm_default_project_id.id,
+                    "default_partner_id": self.partner_id.id,
+                    "default_user_ids": [fields.Command.set(self.user_id.ids)],
+                },
+            }
+        )
         return action

@@ -63,5 +63,5 @@ class CrmCreateTAsk(models.TransientModel):
             "partner_id": self.lead_id.partner_id.id,
             "lead_id": self.lead_id.id,
             "description": self.description,
-            "user_ids": [(6, 0, [])],
+            "user_ids": [fields.Command.set(self.lead_id.user_id.ids)],
         }
