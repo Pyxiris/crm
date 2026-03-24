@@ -1,10 +1,33 @@
 # Copyright 2023 Moduon Team S.L.
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl-3.0)
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
-class CrmLead(models.Model):
+class ProjectTask(models.Model):
     _inherit = "project.task"
 
     lead_id = fields.Many2one("crm.lead")
+
+    @api.model
+    def _get_sudo_env_with_context(self):
+        """Helper to create a sudo environment preserving default_ context keys."""
+
+        original_context = self.env.context
+        sudo_self = self.sudo()
+
+        # Filter and re-inject default_ keys into the sudo'd environment's context
+        default_context_keys = {
+            k: v for k, v in original_context.items() if k.startswith("default_")
+        }
+        return sudo_self.with_context(**default_context_keys)
+
+    @api.model
+    def default_get(self, fields):
+        # Our user may have access to project.task, but he may not have access to
+        # the crm default project. To solve this, we fetch defaults with sudo.
+        # This lets us allow users to create and edit tasks from leads while
+        # not giving them full access to the project
+        if self.env.context.get("default_lead_id"):
+            self = self._get_sudo_env_with_context()
+        return super().default_get(fields)

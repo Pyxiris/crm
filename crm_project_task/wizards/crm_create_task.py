@@ -1,9 +1,6 @@
 # Copyright 2023 Moduon Team S.L.
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl-3.0)
 
-
-from markupsafe import Markup
-
 from odoo import fields, models
 from odoo.exceptions import UserError
 
@@ -26,34 +23,7 @@ class CrmCreateTAsk(models.TransientModel):
                 )
             )
         # Create task
-        task = self.env["project.task"].sudo().create(self._get_data_create(project))
-        # Messages in chatter
-        task.message_post(
-            body=self.env._(
-                "Task created from lead/opportunity %s",
-                Markup("<a href=# data-oe-model=crm.lead data-oe-id=%s>%s</a>.")
-                % (self.lead_id.id, self.lead_id.name),
-            )
-        )
-        self.lead_id.message_post(
-            body=self.env._(
-                "Task %s created.",
-                Markup("<a href=# data-oe-model=project.task data-oe-id=%s>%s</a>")
-                % (task.id, task.display_name),
-            )
-        )
-        # Return action go to created task
-        view = self.env.ref("project.view_task_form2")
-        return {
-            "name": "Task created",
-            "view_type": "form",
-            "view_mode": "form",
-            "view_id": view.id,
-            "res_model": "project.task",
-            "type": "ir.actions.act_window",
-            "res_id": task.id,
-            "context": self.env.context,
-        }
+        self.env["project.task"].sudo().create(self._get_data_create(project))
 
     def _get_data_create(self, project):
         """Get dict to create task"""
