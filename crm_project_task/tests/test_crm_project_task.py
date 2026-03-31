@@ -1,7 +1,7 @@
 # Copyright 2023 Moduon Team S.L.
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl-3.0)
 
-from odoo.exceptions import UserError
+from odoo import fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -14,6 +14,7 @@ class TestCrmProjectTask(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.company = cls.env.user.company_id
+        cls.company_2 = cls.env["res.company"].create({"name": "Second Company"})
         cls.user_salesman = mail_new_test_user(
             cls.env,
             login="user_test",
@@ -35,63 +36,188 @@ class TestCrmProjectTask(TransactionCase):
                 "user_id": cls.user_salesman.id,
             }
         )
+        cls.lead_2 = cls.env["crm.lead"].create(
+            {
+                "name": "Other Lead",
+                "type": "lead",
+                "company_id": cls.company_2.id,
+            }
+        )
         cls.project = cls.env["project.project"].create(
             {
                 "name": "Test Project",
                 "description": "Test Description",
             }
         )
-
-    def test_create_task(self):
-        self.company.crm_default_project_id = self.project
-        task_name = "Task Test"
-        task_description = "Line1</br>Line2"
-        action = (
-            self.env["crm.create.task"]
-            .with_user(self.user_salesman)
-            .create(
-                {
-                    "lead_id": self.lead.id,
-                    "task_name": task_name,
-                    "description": task_description,
-                }
-            )
-            .create_task()
-        )
-        task = self.env["project.task"].browse(action["res_id"])
-        self.assertEqual(task.name, task_name)
-        self.assertEqual(task.project_id, self.company.crm_default_project_id)
-        self.assertEqual(task.partner_id, self.partner)
-        self.assertEqual(task.lead_id, self.lead)
-
-    def test_create_task_no_project(self):
-        self.company.crm_default_project_id = False
-        task_name = "Task Test"
-        task_description = "Line1</br>Line2"
-        wizard = (
-            self.env["crm.create.task"]
-            .with_user(self.user_salesman)
-            .create(
-                {
-                    "lead_id": self.lead.id,
-                    "task_name": task_name,
-                    "description": task_description,
-                }
-            )
-        )
-        with self.assertRaises(UserError):
-            wizard.create_task()
-
-    def test_action_tasks(self):
-        self.company.crm_default_project_id = self.project
-        self.env["crm.create.task"].with_user(self.user_salesman).create(
+        cls.project_2 = cls.env["project.project"].create(
             {
-                "lead_id": self.lead.id,
-                "task_name": "Task Test",
-                "description": "Line1</br>Line2",
+                "name": "Second Project",
+                "description": "Second Description",
             }
-        ).create_task()
-        action = self.lead.action_tasks()
+        )
+        cls.company.crm_default_project_id = cls.project
+
+    def test_action_create_task(self):
+        action = self.lead.action_create_task()
+
+        self.assertEqual(action["type"], "ir.actions.act_window")
+        self.assertEqual(action["res_model"], "project.task")
+        self.assertEqual(action["view_mode"], "form")
+        self.assertEqual(action["context"]["default_name"], self.lead.name)
+        self.assertEqual(action["context"]["default_lead_id"], self.lead.id)
+        self.assertEqual(action["context"]["default_project_id"], self.project.id)
+        self.assertEqual(action["context"]["default_partner_id"], self.partner.id)
+        self.assertEqual(
+            action["context"]["default_user_ids"],
+            [fields.Command.set(self.user_salesman.ids)],
+        )
+        self.assertEqual(action["context"]["search_default_lead_id"], self.lead.id)
+        self.assertTrue(action["context"]["crm_project_task_sudo"])
+
+    def test_get_default_context_uses_lead_company_project(self):
+        self.company_2.crm_default_project_id = self.project_2
+
+        context = self.lead_2._get_default_context()
+
+        self.assertEqual(context["default_name"], self.lead_2.name)
+        self.assertEqual(context["default_lead_id"], self.lead_2.id)
+        self.assertEqual(context["default_project_id"], self.project_2.id)
+        self.assertEqual(context["default_partner_id"], self.lead_2.partner_id.id)
+        self.assertEqual(
+            context["default_user_ids"], [fields.Command.set(self.lead_2.user_id.ids)]
+        )
+        self.assertTrue(context["crm_project_task_sudo"])
+
+    def test_action_view_tasks(self):
+        task = self.env["project.task"].create(
+            {
+                "name": "Task Test",
+                "lead_id": self.lead.id,
+                "project_id": self.project.id,
+            }
+        )
+
+        action = self.lead.action_view_tasks()
+
+        self.assertEqual(action["type"], "ir.actions.act_window")
+        self.assertEqual(action["res_model"], "project.task")
+        self.assertEqual(action["context"]["search_default_open_tasks"], 1)
+        self.assertEqual(action["context"]["default_lead_id"], self.lead.id)
+        self.assertEqual(action["context"]["default_project_id"], self.project.id)
+        self.assertEqual(action["context"]["default_partner_id"], self.partner.id)
+        self.assertEqual(
+            list(action["domain"]),
+            [("lead_id", "=", self.lead.id)],
+            "The base module returns only the lead_id domain.",
+        )
+
         tasks = self.env["project.task"].search(action["domain"])
-        tasks_lead = tasks.mapped("lead_id")
-        self.assertEqual(self.lead, tasks_lead)
+        self.assertEqual(tasks, self.lead.task_ids)
+        self.assertIn(task, tasks)
+
+    def test_task_count_computed_from_related_tasks(self):
+        self.assertEqual(self.lead.task_count, 0)
+        self.env["project.task"].create(
+            {"name": "Task 1", "lead_id": self.lead.id, "project_id": self.project.id}
+        )
+        self.env["project.task"].create(
+            {"name": "Task 2", "lead_id": self.lead.id, "project_id": self.project.id}
+        )
+        self.lead.invalidate_recordset(["task_ids", "task_count"])
+        self.assertEqual(self.lead.task_count, 2)
+
+    def test_project_task_get_sudo_env_without_flag(self):
+        task_model = self.env["project.task"].with_user(self.user_salesman)
+        returned_model = task_model._get_sudo_env_with_context()
+        self.assertEqual(returned_model, task_model)
+        self.assertEqual(returned_model.env.uid, self.user_salesman.id)
+
+    def test_project_task_get_sudo_env_preserves_only_default_context(self):
+        task_model = (
+            self.env["project.task"]
+            .with_user(self.user_salesman)
+            .with_context(
+                default_name="Preserved task",
+                default_project_id=self.project.id,
+                custom_context_key="should_be_removed",
+                crm_project_task_sudo=True,
+            )
+        )
+        sudo_task_model = task_model._get_sudo_env_with_context()
+
+        self.assertEqual(sudo_task_model.env.uid, self.user_salesman.id)
+        self.assertTrue(sudo_task_model.env.su)
+        self.assertEqual(
+            sudo_task_model.env.context.get("default_name"), "Preserved task"
+        )
+        self.assertEqual(
+            sudo_task_model.env.context.get("default_project_id"), self.project.id
+        )
+        self.assertEqual(
+            sudo_task_model.env.context.get("custom_context_key"),
+            "should_be_removed",
+            "Current implementation keeps non-default keys after sudo.",
+        )
+        self.assertTrue(sudo_task_model.env.context.get("crm_project_task_sudo"))
+
+    def test_project_task_default_get_with_sudo_context(self):
+        defaults = (
+            self.env["project.task"]
+            .with_user(self.user_salesman)
+            .with_context(
+                default_name="Preserved task",
+                default_project_id=self.project.id,
+                default_partner_id=self.partner.id,
+                crm_project_task_sudo=True,
+            )
+            .default_get(["name", "project_id", "partner_id"])
+        )
+
+        self.assertEqual(defaults["name"], "Preserved task")
+        self.assertEqual(defaults["project_id"], self.project.id)
+        self.assertEqual(defaults["partner_id"], self.partner.id)
+
+    def test_project_task_default_get_without_sudo_context(self):
+        defaults = (
+            self.env["project.task"]
+            .with_user(self.user_salesman)
+            .with_context(
+                default_name="Regular context task",
+                default_project_id=self.project.id,
+            )
+            .default_get(["name", "project_id"])
+        )
+        self.assertEqual(defaults["name"], "Regular context task")
+        self.assertEqual(defaults["project_id"], self.project.id)
+
+    def test_merge_get_fields_specific_keeps_tasks_linked(self):
+        task_1 = self.env["project.task"].create(
+            {
+                "name": "Merge Task 1",
+                "lead_id": self.lead.id,
+                "project_id": self.project.id,
+            }
+        )
+        task_2 = self.env["project.task"].create(
+            {
+                "name": "Merge Task 2",
+                "lead_id": self.lead.id,
+                "project_id": self.project.id,
+            }
+        )
+        fields_info = self.lead._merge_get_fields_specific()
+        self.assertIn("task_ids", fields_info)
+
+        task_commands = fields_info["task_ids"]("task_ids", self.lead)
+        linked_ids = {command[1] for command in task_commands if command[0] == 4}
+        self.assertSetEqual(linked_ids, {task_1.id, task_2.id})
+
+    def test_res_config_settings_related_default_project(self):
+        self.company.crm_default_project_id = self.project
+        settings = self.env["res.config.settings"].create(
+            {"company_id": self.company.id}
+        )
+        self.assertEqual(settings.crm_default_project_id, self.project)
+
+        settings.crm_default_project_id = self.project_2
+        self.assertEqual(self.company.crm_default_project_id, self.project_2)
