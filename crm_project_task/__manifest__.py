@@ -18,6 +18,8 @@
         "project",
     ],
     "data": [
+        "security/crm_project_task_security.xml",
+        "security/ir.model.access.csv",
         "views/res_config_settings.xml",
         "views/crm_lead.xml",
         "views/project_task.xml",
