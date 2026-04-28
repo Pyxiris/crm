@@ -307,3 +307,21 @@ class TestCrmProjectTask(TransactionCase):
 
         settings.crm_default_project_id = self.project_2
         self.assertEqual(self.company.crm_default_project_id, self.project_2)
+
+    def test_action_open_parent_lead(self):
+        task = self.env["project.task"].create(
+            {
+                "name": "Task linked to lead",
+                "lead_id": self.lead.id,
+                "project_id": self.project.id,
+            }
+        )
+
+        action = task.action_open_parent_lead()
+
+        self.assertEqual(action["type"], "ir.actions.act_window")
+        self.assertEqual(action["name"], task.env._("Parent Lead"))
+        self.assertEqual(action["view_mode"], "form")
+        self.assertEqual(action["res_model"], "crm.lead")
+        self.assertEqual(action["res_id"], self.lead.id)
+        self.assertEqual(action["context"], task.env.context)
