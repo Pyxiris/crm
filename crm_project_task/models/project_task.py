@@ -30,3 +30,13 @@ class ProjectTask(models.Model):
         # permission to read them
         self = self._get_sudo_env_with_context()
         return super().default_get(fields)
+
+    def action_open_parent_lead(self):
+        return {
+            "name": self.env._("Parent Lead"),
+            "view_mode": "form",
+            "res_model": "crm.lead",
+            "res_id": self.lead_id.id,
+            "type": "ir.actions.act_window",
+            "context": self.env.context,
+        }
