@@ -31,11 +31,6 @@ msgstr ""
 "contatti / opportunità"
 
 #. module: crm_project_task
-#: model_terms:ir.ui.view,arch_db:crm_project_task.wizard_crm_create_task_view_form
-msgid "Cancel"
-msgstr "Annulla"
-
-#. module: crm_project_task
 #: model:ir.model,name:crm_project_task.model_res_company
 msgid "Companies"
 msgstr "Aziende"
@@ -46,21 +41,10 @@ msgid "Config Settings"
 msgstr "Impostazioni configurazione"
 
 #. module: crm_project_task
-#: model:ir.actions.act_window,name:crm_project_task.wizard_crm_create_task_action
+#: model:ir.actions.act_window,name:crm_project_task.action_new_task
 #: model_terms:ir.ui.view,arch_db:crm_project_task.inherit_crm_lead_view_form_crm_project_task
-#: model_terms:ir.ui.view,arch_db:crm_project_task.wizard_crm_create_task_view_form
 msgid "Create Task"
 msgstr "Crea lavoro"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__create_uid
-msgid "Created by"
-msgstr "Creato da"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__create_date
-msgid "Created on"
-msgstr "Creato il"
 
 #. module: crm_project_task
 #: model:ir.model.fields,field_description:crm_project_task.field_res_company__crm_default_project_id
@@ -69,42 +53,6 @@ msgid "Crm Default Project"
 msgstr "Progetto predefinito"
 
 #. module: crm_project_task
-#: model_terms:ir.ui.view,arch_db:crm_project_task.res_config_settings_view_form
-msgid "Default project"
-msgstr "Progetto predefinito"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__description
-msgid "Description"
-msgstr "Descrizione"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__display_name
-msgid "Display Name"
-msgstr "Nome visualizzato"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__id
-msgid "ID"
-msgstr "ID"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task____last_update
-msgid "Last Modified on"
-msgstr "Ultima modifica il"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__write_uid
-msgid "Last Updated by"
-msgstr "Ultimo aggiornamento di"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__write_date
-msgid "Last Updated on"
-msgstr "Ultimo aggiornamento il"
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__lead_id
 #: model:ir.model.fields,field_description:crm_project_task.field_project_task__lead_id
 msgid "Lead"
 msgstr "Contatto"
@@ -114,16 +62,6 @@ msgstr "Contatto"
 #: model_terms:ir.ui.view,arch_db:crm_project_task.view_task_form2_inherit_crm_project_task
 msgid "Lead/Opportunity"
 msgstr "Contatto/Opportunità"
-
-#. module: crm_project_task
-#. odoo-python
-#: code:addons/crm_project_task/wizards/crm_create_task.py:0
-#, python-format
-msgid ""
-"Project not configured in settings, please contact with your administrator."
-msgstr ""
-"Manca la configurazione dei progetti nelle impostazioni, contattare "
-"l'amministratore."
 
 #. module: crm_project_task
 #: model_terms:ir.ui.view,arch_db:crm_project_task.res_config_settings_view_form
@@ -137,31 +75,9 @@ msgid "Task"
 msgstr "Lavoro"
 
 #. module: crm_project_task
-#. odoo-python
-#: code:addons/crm_project_task/wizards/crm_create_task.py:0
-#, python-format
-msgid ""
-"Task <a href=# data-oe-model=project.task data-oe-id=%(task)d>%(name)s</a> "
-"created."
-msgstr ""
-"Creato lavoro <a href=# data-oe-model=project.task data-oe-id=%(task)d>"
-"%(name)s</a>."
-
-#. module: crm_project_task
-#: model:ir.model.fields,field_description:crm_project_task.field_crm_create_task__task_name
-msgid "Task Name"
-msgstr "Nome lavoro"
-
-#. module: crm_project_task
-#. odoo-python
-#: code:addons/crm_project_task/wizards/crm_create_task.py:0
-#, python-format
-msgid ""
-"Task created from lead/opportunity <a href=# data-oe-model=crm.lead data-oe-"
-"id=%(lead)d>%(name)s</a>."
-msgstr ""
-"Lavoro creato da contatto/opportunità <a href=# data-oe-model=crm.lead data-"
-"oe-id=%(lead)d>%(name)s</a>."
+#: model:ir.actions.act_window,name:crm_project_task.action_crm_lead_related_tasks
+msgid "Tasks"
+msgstr "Lavori"
 
 #. module: crm_project_task
 #: model_terms:ir.ui.view,arch_db:crm_project_task.inherit_crm_lead_view_form_crm_project_task
@@ -169,6 +85,33 @@ msgid "Task(s)"
 msgstr "Lavoro(i)"
 
 #. module: crm_project_task
-#: model:ir.model,name:crm_project_task.model_crm_create_task
-msgid "Wizard to create task"
-msgstr "Procedura guidata per creare un lavoro"
+#: model:ir.rule,name:crm_project_task.rule_salesman_all_lead_tasks
+msgid "Tasks linked to any leads I have access to"
+msgstr "Lavori collegati a qualsiasi contatto a cui ho accesso"
+
+#. module: crm_project_task
+#: model:ir.rule,name:crm_project_task.rule_salesman_own_lead_tasks
+msgid "Tasks linked to my leads"
+msgstr "Lavori collegati ai miei contatti"
+
+#. module: crm_project_task
+#: model_terms:ir.actions.act_window,help:crm_project_task.action_crm_lead_related_tasks
+msgid "No tasks found. Let's create one!"
+msgstr "Nessun lavoro trovato. Creiamone uno!"
+
+#. module: crm_project_task
+#: model_terms:ir.actions.act_window,help:crm_project_task.action_crm_lead_related_tasks
+msgid "Keep track of the progress of your tasks from creation to completion."
+msgstr "Tieni traccia dell'avanzamento dei tuoi lavori dalla creazione al completamento."
+
+#. module: crm_project_task
+#: model_terms:ir.actions.act_window,help:crm_project_task.action_crm_lead_related_tasks
+msgid "Collaborate efficiently by chatting in real-time or via email."
+msgstr "Collabora in modo efficiente tramite chat in tempo reale o email."
+
+#. module: crm_project_task
+#: model_terms:ir.ui.view,arch_db:crm_project_task.view_task_form2_inherit_crm_project_task
+#. odoo-python
+#: code:addons/crm_project_task/models/project_task.py:0
+msgid "Parent Lead"
+msgstr "Contatto padre"
